@@ -3,4 +3,6 @@
     <string name="user_spotify_avatar">user Spotify avatar</string>
     <string name="playlist">Playlist</string>
     <string name="playlist_status">public</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

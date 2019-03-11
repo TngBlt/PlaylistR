@@ -1,4 +1,4 @@
-package com.tngblt.playlistr
+package com.tngblt.playlistr.activities
 
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
@@ -7,7 +7,6 @@ import android.util.Log
 import com.spotify.android.appremote.api.ConnectionParams
 import com.spotify.android.appremote.api.SpotifyAppRemote
 
-import com.spotify.protocol.types.Track
 import com.google.firebase.firestore.FirebaseFirestore
 import com.spotify.sdk.android.authentication.AuthenticationClient
 import com.spotify.sdk.android.authentication.AuthenticationRequest
@@ -16,11 +15,19 @@ import android.content.Intent
 import android.os.Debug
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.util.LruCache
 import android.widget.ImageView
 import android.widget.TextView
-import com.google.firebase.firestore.auth.User
-import com.tngblt.playlistr.userdata.UserPlaylist
+import android.widget.Toast
+import com.tngblt.playlistr.utils.DataAdaptaterRecycler
+import com.tngblt.playlistr.utils.DownloadImageTask
+import com.tngblt.playlistr.utils.ImageParams
+import com.tngblt.playlistr.R
+import com.tngblt.playlistr.interfaces.UserService
+import com.tngblt.playlistr.models.UserPlaylist
+import com.tngblt.playlistr.models.spotifyData.user.User
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import okhttp3.*
 import org.json.JSONObject
 import java.io.IOException
@@ -40,6 +47,18 @@ class MainActivity : AppCompatActivity() {
     private lateinit var viewManager: RecyclerView.LayoutManager
     private var currentUserPlaylist: ArrayList<UserPlaylist> = arrayListOf(UserPlaylist("","","",false))
 
+    private var disposable:Disposable? = null
+    private val userService by lazy {
+        UserService.create()
+    }
+    private var currentUser: User? = null
+        set(user) {
+        field = user
+        textViewResult?.text = user?.displayName
+
+        DownloadImageTask(userImage)
+            .execute(ImageParams(user?.images!![0].url, null, "userAvatar"))
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -74,11 +93,15 @@ class MainActivity : AppCompatActivity() {
         builder.setScopes(arrayOf("streaming"))
         val request = builder.build()
 
+        /**
+         * Call the Spotify application to open the authentication window to get the authorization token
+         */
         AuthenticationClient.openLoginActivity(this, requestCode, request)
 
         textViewResult = findViewById(R.id.text_view_result)
         userImage = findViewById(R.id.userImage)
-        // Create a new user with a first and last name FIRESTORE
+
+        // Create a new user FIRESTORE
         /*
         val user = HashMap<String,Any>()
         user.put("first", "Ada")
@@ -98,17 +121,18 @@ class MainActivity : AppCompatActivity() {
             */
     }
 
-    private fun connected() {
-        spotifyAppRemote?.let {
-            // Play a playlist
-            val playlistURI = "spotify:playlist:37i9dQZF1DX2sUQwD7tbmL"
-            it.playerApi.play(playlistURI)
-            // Subscribe to PlayerState
-            it.playerApi.subscribeToPlayerState().setEventCallback {
-                val track: Track = it.track
-                Log.d("MainActivity", track.name + " by " + track.artist.name)
-            }
-        }
+    private fun getCurrentUser(apiKey:String) {
+        disposable = userService.getCurrentUserData("Bearer $apiKey")
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { result -> currentUser = result},
+                { error -> Toast.makeText(this, error.message,Toast.LENGTH_LONG).show()}
+            )
+    }
+
+    private fun getCurrentUserPlaylists(apiKey:String) {
+
     }
 
     override fun onStop() {
@@ -118,7 +142,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-
+    /**
+     * function called when the authentication screen has been closed
+     * by the user. This is where the Authorization token is retrieved
+     */
     override fun onActivityResult(reqCode: Int, resultCode: Int, intent: Intent?) {
         super.onActivityResult(requestCode, resultCode, intent)
 
@@ -129,8 +156,8 @@ class MainActivity : AppCompatActivity() {
             when (response.type) {
                 // Response was successful and contains auth token
                 AuthenticationResponse.Type.TOKEN -> {
-
-                    UserRequest(OkHttpClient(), response.accessToken)
+                    getCurrentUser(response.accessToken)
+                    //UserRequest(OkHttpClient(), response.accessToken)
                 }
 
                 // Auth flow returned an error
@@ -142,41 +169,6 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    fun UserRequest(client: OkHttpClient, accessToken:String) {
-        val apiUrl = "https://api.spotify.com/v1/me"
-        val request = Request.Builder()
-            .url(apiUrl )
-            .get()
-            .header("Accept", "application/json")
-            .header("Content-Type", "application/json")
-            .header("Authorization", "Bearer $accessToken")
-            .build()
-
-        client.newCall(request)
-            .enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    e.printStackTrace()
-                }
-
-                @Throws(IOException::class)
-                override fun onResponse(call: Call, response: Response) {
-                    if(response.isSuccessful) {
-                        var res = response.body()?.string().toString()
-                        var resJson = JSONObject(res)
-                        print(res)
-                        this@MainActivity.runOnUiThread {
-                            textViewResult?.text = resJson["display_name"].toString()
-                            val imageUrl = JSONObject(resJson.getJSONArray("images")[0].toString())["url"].toString()
-
-                            DownloadImageTask(userImage)
-                                .execute(ImageParams(imageUrl, null, "userAvatar"))
-                            getUserPlaylists(client,accessToken)
-                        }
-                    }
-                }
-            })
     }
 
     fun getUserPlaylists(client: OkHttpClient, accessToken:String) {

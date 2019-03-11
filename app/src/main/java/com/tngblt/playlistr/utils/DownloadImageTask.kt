@@ -1,4 +1,4 @@
-package com.tngblt.playlistr
+package com.tngblt.playlistr.utils
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -8,11 +8,11 @@ import android.util.LruCache
 import android.view.View
 import android.widget.ImageView
 
-class ImageParams(val url:String, val memoryCache:LruCache<String, Bitmap>?, val imgId: String)
+class ImageParams(val url:String?, val memoryCache:LruCache<String, Bitmap>?, val imgId: String)
 
 class DownloadImageTask(internal var bmImage: ImageView?) : AsyncTask<ImageParams, Void, Bitmap>() {
 
-    override fun doInBackground(vararg params:ImageParams?): Bitmap? {
+    override fun doInBackground(vararg params: ImageParams?): Bitmap? {
         val urldisplay = params[0]?.url
         var mIcon11: Bitmap? = null
         try {

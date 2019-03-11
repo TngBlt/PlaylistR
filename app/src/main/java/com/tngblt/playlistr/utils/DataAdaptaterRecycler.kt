@@ -1,4 +1,4 @@
-package com.tngblt.playlistr
+package com.tngblt.playlistr.utils
 
 import android.graphics.Bitmap
 import android.support.constraint.ConstraintLayout
@@ -9,10 +9,13 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import com.tngblt.playlistr.userdata.UserPlaylist
+import com.tngblt.playlistr.models.UserPlaylist
 import android.graphics.drawable.BitmapDrawable
+import com.tngblt.playlistr.R
 
-
+/**
+ * Class to create the list view (RecyclerView) of all user Playlists
+ */
 class DataAdaptaterRecycler : RecyclerView.Adapter<DataAdaptaterRecycler.DataViewHolder> {
 
     private val dataset: ArrayList<UserPlaylist>
@@ -46,13 +49,12 @@ class DataAdaptaterRecycler : RecyclerView.Adapter<DataAdaptaterRecycler.DataVie
 
     // Create new views (invoked by the layout manager)
     override fun onCreateViewHolder(parent: ViewGroup,
-                                    viewType: Int): DataAdaptaterRecycler.DataViewHolder {
+                                    viewType: Int): DataViewHolder {
         // create a new view
         val playlistCard = LayoutInflater.from(parent.context)
             .inflate(R.layout.user_playlist_list, parent, false) as ConstraintLayout
         //playlistImage = playlistCard.findViewById(R.id.playlistImage)
         // set the view's size, margins, paddings and layout parameters
-
 
         return DataViewHolder(playlistCard)
     }
@@ -70,7 +72,6 @@ class DataAdaptaterRecycler : RecyclerView.Adapter<DataAdaptaterRecycler.DataVie
             val imgId = if (img.drawable !=null) (img.drawable as BitmapDrawable).bitmap.generationId else 0
             loadBitmap(dataset[position].name ,img, dataset[position].image_url)
         }
-
     }
 
     // Return the size of your dataset (invoked by the layout manager)
@@ -88,8 +89,6 @@ class DataAdaptaterRecycler : RecyclerView.Adapter<DataAdaptaterRecycler.DataVie
             null
         }
     }
-
-
 
     fun getBitmapFromMemCache(key: String): Bitmap? {
         return memoryCache.get(key)
