@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activities.UserProfileActivity">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hello World!"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:id="@+id/text_view_result"
+        app:layout_constraintEnd_toStartOf="@+id/userImage"
+        android:layout_marginEnd="4dp" android:layout_marginTop="20dp"
+        app:layout_constraintTop_toTopOf="@+id/userImage"/>
+
+    <com.pkmmte.view.CircularImageView
+        android:layout_width="60dp"
+        android:layout_height="60dp" tools:srcCompat="@tools:sample/avatars"
+        android:id="@+id/userImage"
+        app:border="false"
+        android:layout_marginTop="16dp"
+        app:layout_constraintTop_toTopOf="parent" android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:focusable="true"/>
+
+</android.support.constraint.ConstraintLayout>

@@ -1,11 +1,13 @@
 package com.tngblt.playlistr.models.spotifyData.user
 
 
+import android.arch.persistence.room.Entity
 import com.google.gson.annotations.SerializedName
 import com.tngblt.playlistr.models.spotifyData.playlist.ExternalUrl
 import com.tngblt.playlistr.models.spotifyData.playlist.Image
 
-data class User(
+@Entity
+class User(
     @SerializedName("display_name")
     val displayName: String, // tanguy21b
     @SerializedName("external_urls")

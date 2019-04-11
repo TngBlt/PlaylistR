@@ -9,19 +9,18 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import com.tngblt.playlistr.models.UserPlaylist
 import android.graphics.drawable.BitmapDrawable
 import com.tngblt.playlistr.R
+import com.tngblt.playlistr.models.spotifyData.playlist.Playlist
 
 /**
  * Class to create the list view (RecyclerView) of all user Playlists
  */
 class DataAdaptaterRecycler : RecyclerView.Adapter<DataAdaptaterRecycler.DataViewHolder> {
 
-    private val dataset: ArrayList<UserPlaylist>
+    private var dataset: List<Playlist>? = null
 
-    constructor(dataset: ArrayList<UserPlaylist>) : super() {
-        this.dataset = dataset
+    constructor() : super() {
         val maxMemory = (Runtime.getRuntime().maxMemory() / 1024).toInt()
 
         // Use 1/8th of the available memory for this memory cache.
@@ -35,6 +34,11 @@ class DataAdaptaterRecycler : RecyclerView.Adapter<DataAdaptaterRecycler.DataVie
                 return bitmap.byteCount / 1024
             }
         }
+    }
+
+    internal fun setData(playlists:List<Playlist>) {
+        this.dataset = playlists
+        notifyDataSetChanged()
     }
 
     private lateinit var memoryCache: LruCache<String, Bitmap>
@@ -64,18 +68,18 @@ class DataAdaptaterRecycler : RecyclerView.Adapter<DataAdaptaterRecycler.DataVie
         // - get element from your dataset at this position
         // - replace the contents of the view with that element
 
-        holder.playlistCard.findViewWithTag<TextView>("playlist_title").text = dataset[position].name
-        holder.playlistCard.findViewWithTag<TextView>("playlist_status").text = if (dataset[position].public_status) "public" else "private"
-        var img:ImageView = holder.playlistCard.findViewWithTag<ImageView>("playlistImage")
+        holder.playlistCard.findViewWithTag<TextView>("playlist_title").text = dataset?.get(position)?.name
+        //holder.playlistCard.findViewWithTag<TextView>("playlist_status").text = if (dataset?.get(position)?.public!!) "public" else "private"
+        val img:ImageView = holder.playlistCard.findViewWithTag<ImageView>("playlistImage")
         img.visibility = View.INVISIBLE
-        if(dataset[position].image_url.isNotEmpty()){
+        if(dataset?.get(position)?.images!![0].url?.isNotEmpty()!!){
             val imgId = if (img.drawable !=null) (img.drawable as BitmapDrawable).bitmap.generationId else 0
-            loadBitmap(dataset[position].name ,img, dataset[position].image_url)
+            loadBitmap(dataset?.get(position)?.name!! ,img, dataset?.get(position)?.images!![0].url!!)
         }
     }
 
     // Return the size of your dataset (invoked by the layout manager)
-    override fun getItemCount() = dataset.size
+    override fun getItemCount() = if (!dataset.isNullOrEmpty() ) dataset!!.size else 0
 
     fun loadBitmap(resId: String, imageView: ImageView, img_url : String) {
 
@@ -83,7 +87,7 @@ class DataAdaptaterRecycler : RecyclerView.Adapter<DataAdaptaterRecycler.DataVie
             imageView.setImageBitmap(it)
             imageView.visibility = View.VISIBLE
         } ?: run {
-           //load image
+            //load image
             DownloadImageTask(imageView)
                 .execute(ImageParams(img_url, memoryCache, resId))
             null

@@ -4,8 +4,10 @@ import com.google.gson.annotations.SerializedName
 
 
 data class Followers(
+
     @SerializedName("href")
-    val href: Any?, // null
+    val href: String?, // null
+
     @SerializedName("total")
     val total: Int // 3
 )

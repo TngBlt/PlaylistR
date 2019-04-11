@@ -12,25 +12,29 @@ import com.spotify.sdk.android.authentication.AuthenticationClient
 import com.spotify.sdk.android.authentication.AuthenticationRequest
 import com.spotify.sdk.android.authentication.AuthenticationResponse
 import android.content.Intent
-import android.os.Debug
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.support.v7.widget.SearchView
+import android.view.Menu
+import android.view.MenuItem
+import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+
 import com.tngblt.playlistr.utils.DataAdaptaterRecycler
 import com.tngblt.playlistr.utils.DownloadImageTask
 import com.tngblt.playlistr.utils.ImageParams
 import com.tngblt.playlistr.R
-import com.tngblt.playlistr.interfaces.UserService
-import com.tngblt.playlistr.models.UserPlaylist
+import com.tngblt.playlistr.interfaces.ApiService
+import com.tngblt.playlistr.models.spotifyData.playlist.Playlist
 import com.tngblt.playlistr.models.spotifyData.user.User
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import okhttp3.*
-import org.json.JSONObject
-import java.io.IOException
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -42,35 +46,41 @@ class MainActivity : AppCompatActivity() {
 
     private var textViewResult:TextView? = null
     private var userImage:ImageView? = null
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var viewAdapter: RecyclerView.Adapter<*>
-    private lateinit var viewManager: RecyclerView.LayoutManager
-    private var currentUserPlaylist: ArrayList<UserPlaylist> = arrayListOf(UserPlaylist("","","",false))
+    private var apiKey: String? = null
 
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var viewAdapter: DataAdaptaterRecycler
+    private lateinit var viewManager: RecyclerView.LayoutManager
+    private var currentUserPlaylist: List<Playlist>? = null
+        set(value) {
+            field = value
+            viewAdapter.setData(value!!)
+        }
     private var disposable:Disposable? = null
-    private val userService by lazy {
-        UserService.create()
+    private val apiService by lazy {
+        ApiService.create()
     }
     private var currentUser: User? = null
         set(user) {
-        field = user
-        textViewResult?.text = user?.displayName
+            field = user
+            textViewResult?.text = user?.displayName
 
-        DownloadImageTask(userImage)
-            .execute(ImageParams(user?.images!![0].url, null, "userAvatar"))
-    }
+            DownloadImageTask(userImage)
+                .execute(ImageParams(user?.images!![0].url, null, "userAvatar"))
+        }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         viewManager = LinearLayoutManager(this)
-        viewAdapter = DataAdaptaterRecycler(currentUserPlaylist)
+        viewAdapter = DataAdaptaterRecycler()
 
         recyclerView = findViewById<RecyclerView>(R.id.recyclerView).apply {
             // use this setting to improve performance if you know that changes
             // in content do not change the layout size of the RecyclerView
-            setHasFixedSize(true)
+            setHasFixedSize(false)
 
             // use a linear layout manager
             layoutManager = viewManager
@@ -99,7 +109,27 @@ class MainActivity : AppCompatActivity() {
         AuthenticationClient.openLoginActivity(this, requestCode, request)
 
         textViewResult = findViewById(R.id.text_view_result)
+
+        textViewResult?.setOnClickListener { v -> openUserActivity(v) }
+
         userImage = findViewById(R.id.userImage)
+
+        findViewById<EditText>(R.id.search_field).setOnEditorActionListener { v, actionId, event ->
+            return@setOnEditorActionListener when (actionId) {
+                EditorInfo.IME_ACTION_NEXT -> {
+                    //Log.d("MainActivity", v.text.toString())
+                    if (apiKey != null) {
+                        getResearchResult("Bearer $apiKey", v.text.toString())
+                    }
+                    true
+                }
+                else ->  {
+                    Log.wtf("MainActivity", actionId.toString())
+                    Log.wtf("MainActivity", "Erreur de recherche... ?")
+                    false
+                }
+            }
+        }
 
         // Create a new user FIRESTORE
         /*
@@ -122,7 +152,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getCurrentUser(apiKey:String) {
-        disposable = userService.getCurrentUserData("Bearer $apiKey")
+        disposable = apiService.getCurrentUserData("Bearer $apiKey")
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
@@ -132,7 +162,50 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun getCurrentUserPlaylists(apiKey:String) {
+        disposable = apiService.getCurrentUserPlaylists("Bearer $apiKey")
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { result -> currentUserPlaylist = result.playlists},
+                { error -> Toast.makeText(this,error.message, Toast.LENGTH_LONG).show()}
+            )
+    }
 
+    private fun getUser(apiKey: String, user_id: String) {
+        disposable = apiService.getUserData(user_id,"Bearer $apiKey")
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                { result -> },// TODO: Add to friends list
+                { error -> Toast.makeText(this, error.message,Toast.LENGTH_LONG).show()}
+            )
+    }
+
+    private fun getUserPlaylists(apiKey: String, user_id: String) {
+        disposable = apiService.getUserPlaylists(user_id,"Bearer $apiKey")
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {result -> },
+                { error -> Toast.makeText(this,error.message, Toast.LENGTH_LONG).show()}
+            )
+    }
+
+    private fun getResearchResult(apiKey: String, q: String) {
+        disposable = apiService.getResearchPlaylistResult(q,authHeader = apiKey) // can filter research here by adding the type parameter
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {result ->
+                    currentUserPlaylist = result.playlists!!.items
+                    Toast.makeText(this,result.toString(), Toast.LENGTH_LONG).show()
+                    Log.wtf("MainActivity/Search", result.toString()) // TODO: load result in list below
+                },
+                {error ->
+                    Toast.makeText(this,error.message, Toast.LENGTH_LONG).show()
+                    Log.wtf("MainActivity/Search", error.message)
+                }
+            )
     }
 
     override fun onStop() {
@@ -156,60 +229,29 @@ class MainActivity : AppCompatActivity() {
             when (response.type) {
                 // Response was successful and contains auth token
                 AuthenticationResponse.Type.TOKEN -> {
+                    apiKey = response.accessToken
                     getCurrentUser(response.accessToken)
-                    //UserRequest(OkHttpClient(), response.accessToken)
+                    getCurrentUserPlaylists(response.accessToken)
                 }
 
                 // Auth flow returned an error
                 AuthenticationResponse.Type.ERROR -> {
-                    Log.d("MainActivity", "Error : " + response.error)
+                    Log.wtf("MainActivity", "Error : " + response.error)
                 }
                 else -> {
-                    Log.d("MainActivity", "Error : The auth flow must have been cancelled")
+                    Log.wtf("MainActivity", "Error : The auth flow must have been cancelled")
                 }
             }
         }
     }
 
-    fun getUserPlaylists(client: OkHttpClient, accessToken:String) {
-        val apiUrl = "https://api.spotify.com/v1/me/playlists?limit=50&offset=0"
-        val request = Request.Builder()
-            .url(apiUrl )
-            .get()
-            .header("Accept", "application/json")
-            .header("Content-Type", "application/json")
-            .header("Authorization", "Bearer $accessToken")
-            .build()
-
-        client.newCall(request)
-            .enqueue(object : Callback {
-                override fun onFailure(call: Call, e: IOException) {
-                    Debug.waitForDebugger()
-                    e.printStackTrace()
-                }
-
-                @Throws(IOException::class)
-                override fun onResponse(call: Call, response: Response) {
-                        if(response.isSuccessful) {
-                        var res = response.body()?.string().toString()
-                        var resJson = JSONObject(res)
-                        var playlists = resJson.getJSONArray("items")
-                        currentUserPlaylist.clear()
-                        for (i in 0..(playlists.length() - 1)) {
-                            val pl = JSONObject(playlists.getJSONObject(i).toString())
-
-                            val userPlaylist = UserPlaylist(pl["name"].toString(),
-                                pl["id"].toString(),
-                                JSONObject(pl.getJSONArray("images")[0].toString())["url"].toString(),
-                                pl["public"].toString().toBoolean())
-
-                            currentUserPlaylist.add(userPlaylist)
-                        }
-                        this@MainActivity.runOnUiThread {
-                            viewAdapter.notifyDataSetChanged()
-                        }
-                    }
-                }
-            })
+    fun openUserActivity(view: View) {
+        Toast.makeText(this,"Opening user profile...", Toast.LENGTH_SHORT).show()
+        val intent = Intent(this, UserProfileActivity::class.java)
+        // To pass any data to next activity
+        //intent.putExtra("keyIdentifier", "")
+        // start your next activity
+        startActivity(intent)
     }
+
 }

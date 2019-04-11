@@ -15,9 +15,7 @@
             android:id="@+id/text_view_result"
             app:layout_constraintEnd_toStartOf="@+id/userImage"
             android:layout_marginEnd="4dp" android:layout_marginTop="20dp"
-            app:layout_constraintTop_toTopOf="@+id/userImage"
-            android:clickable="true"
-            android:focusable="true" />
+            app:layout_constraintTop_toTopOf="@+id/userImage"/>
 
     <com.pkmmte.view.CircularImageView
             android:layout_width="60dp"
@@ -26,9 +24,7 @@
             app:border="false"
             android:layout_marginTop="16dp"
             app:layout_constraintTop_toTopOf="parent" android:layout_marginEnd="8dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:clickable="true"
-            android:focusable="true"/>
+            app:layout_constraintEnd_toEndOf="parent"/>
     <android.support.v7.widget.RecyclerView
             android:layout_width="395dp"
             android:layout_height="638dp"
@@ -46,7 +42,6 @@
         android:inputType="text"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:autofillHints="autofillHints"
-        tools:targetApi="o" />
+        android:autofillHints="autofillHints" />
 
 </android.support.constraint.ConstraintLayout>

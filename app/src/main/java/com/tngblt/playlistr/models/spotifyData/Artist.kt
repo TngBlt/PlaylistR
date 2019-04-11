@@ -1,18 +1,25 @@
-package com.tngblt.playlistr.models.spotifyData.playlist
+package com.tngblt.playlistr.models.spotifyData
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
-import com.tngblt.playlistr.models.spotifyData.ListTracks
+import com.tngblt.playlistr.models.spotifyData.playlist.ExternalUrl
+import com.tngblt.playlistr.models.spotifyData.playlist.Image
+import com.tngblt.playlistr.models.spotifyData.user.Followers
 
-class Playlist {
-
-    @SerializedName("collaborative")
-    @Expose
-    var collaborative: Boolean? = null
+class Artist {
 
     @SerializedName("external_urls")
     @Expose
     var externalUrl: ExternalUrl? = null
+        private set
+
+    @SerializedName("followers")
+    @Expose
+    var followers: Followers? = null
+
+    @SerializedName("genres")
+    @Expose
+    var genres: List<String>? = null
 
     @SerializedName("href")
     @Expose
@@ -30,25 +37,9 @@ class Playlist {
     @Expose
     var name: String? = null
 
-    @SerializedName("owner")
+    @SerializedName("popularity")
     @Expose
-    var owner: Owner? = null
-
-    @SerializedName("primary_color")
-    @Expose
-    var primaryColor: Any? = null
-
-    @SerializedName("public")
-    @Expose
-    var public: Boolean? = null
-
-    @SerializedName("snapshot_id")
-    @Expose
-    var snapshotId: String? = null
-
-    @SerializedName("tracks")
-    @Expose
-    var tracks: TrackLight? = null
+    var popularity: Int? = null
 
     @SerializedName("type")
     @Expose
@@ -57,4 +48,9 @@ class Playlist {
     @SerializedName("uri")
     @Expose
     var uri: String? = null
+
+    fun setExternalUrls(externalUrl: ExternalUrl) {
+        this.externalUrl = externalUrl
+    }
+
 }
