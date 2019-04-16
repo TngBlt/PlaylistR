@@ -1,5 +1,7 @@
 package com.tngblt.playlistr.activities
 
+import android.app.Activity
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -12,6 +14,7 @@ import com.spotify.sdk.android.authentication.AuthenticationClient
 import com.spotify.sdk.android.authentication.AuthenticationRequest
 import com.spotify.sdk.android.authentication.AuthenticationResponse
 import android.content.Intent
+import android.inputmethodservice.Keyboard
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.SearchView
@@ -19,6 +22,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
@@ -92,7 +96,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onStart() {
-        super.onStart()
+
 
         val connectionParams = ConnectionParams.Builder(clientId)
             .setRedirectUri(redirectUri)
@@ -107,6 +111,7 @@ class MainActivity : AppCompatActivity() {
          * Call the Spotify application to open the authentication window to get the authorization token
          */
         AuthenticationClient.openLoginActivity(this, requestCode, request)
+        super.onStart()
 
         textViewResult = findViewById(R.id.text_view_result)
 
@@ -197,15 +202,23 @@ class MainActivity : AppCompatActivity() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(
                 {result ->
+                    hideKeyboard(this)
                     currentUserPlaylist = result.playlists!!.items
                     Toast.makeText(this,result.toString(), Toast.LENGTH_LONG).show()
                     Log.wtf("MainActivity/Search", result.toString()) // TODO: load result in list below
                 },
                 {error ->
+                    hideKeyboard(this)
                     Toast.makeText(this,error.message, Toast.LENGTH_LONG).show()
                     Log.wtf("MainActivity/Search", error.message)
                 }
             )
+    }
+
+    private fun hideKeyboard(activity: Activity) {
+        val view: View = activity.findViewById(android.R.id.content)
+        val imm:InputMethodManager = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+        imm.hideSoftInputFromWindow(view.windowToken, 0)
     }
 
     override fun onStop() {
