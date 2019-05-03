@@ -14,12 +14,8 @@ import com.spotify.sdk.android.authentication.AuthenticationClient
 import com.spotify.sdk.android.authentication.AuthenticationRequest
 import com.spotify.sdk.android.authentication.AuthenticationResponse
 import android.content.Intent
-import android.inputmethodservice.Keyboard
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
-import android.support.v7.widget.SearchView
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
@@ -267,4 +263,11 @@ class MainActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
+    fun openPlaylistActivity(view: View) {
+        val intent = Intent(this, PlaylistActivity::class.java)
+        intent.putExtra("apiKey", apiKey)
+        intent.putExtra("playlistId", "")
+
+        startActivity(intent)
+    }
 }

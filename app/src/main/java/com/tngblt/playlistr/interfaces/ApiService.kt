@@ -1,7 +1,7 @@
 package com.tngblt.playlistr.interfaces
 
-import com.tngblt.playlistr.models.spotifyData.ListPlaylists
 import com.tngblt.playlistr.models.spotifyData.playlist.GeneralPlaylistInfo
+import com.tngblt.playlistr.models.spotifyData.playlist.Playlist
 import com.tngblt.playlistr.models.spotifyData.search.GeneralSearchInfo
 import com.tngblt.playlistr.models.spotifyData.user.User
 import com.tngblt.playlistr.utils.BASE_URL
@@ -37,6 +37,8 @@ interface ApiService {
     @GET("search")
     fun getResearchPlaylistResult(@Query("q") search:String, @Query("type") type:String = "playlist", @Header("Authorization") authHeader: String): Observable<GeneralSearchInfo>
 
+    @GET("playlists/{playlist_id}")
+    fun getPlaylist(@Path("playlist_id") playlistId:String, @Header("Authorization") authHeader: String): Observable<Playlist>
 
     companion object {
 

@@ -13,7 +13,13 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
         tools:ignore="GoogleAppIndexingWarning">
-        <activity android:name=".activities.UserProfileActivity"></activity>
+        <service
+            android:name=".services.ApiSpotifyService"
+            android:enabled="true"
+            android:exported="true"></service>
+
+        <activity android:name=".activities.PlaylistActivity" />
+        <activity android:name=".activities.UserProfileActivity" />
         <activity android:name=".activities.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
